@@ -28,6 +28,7 @@ export interface Project {
   end_date: string | null;
   status: "active" | "completed" | "on-hold";
   budget: string | null;
+  department_id: number | null;
 }
 
 export interface Counts {

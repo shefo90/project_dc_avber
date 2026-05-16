@@ -14,3 +14,4 @@ class Department(Base):
     created_date = Column(Date, default=date_type.today)
 
     employees = relationship("Employee", back_populates="department")
+    projects = relationship("Project", back_populates="department")

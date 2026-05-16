@@ -12,6 +12,7 @@ class ProjectCreate(BaseModel):
     end_date: Optional[date] = None
     status: Literal["active", "completed", "on-hold"] = "active"
     budget: Optional[Decimal] = None
+    department_id: Optional[int] = None
 
 
 class ProjectResponse(BaseModel):
@@ -23,5 +24,6 @@ class ProjectResponse(BaseModel):
     end_date: Optional[date]
     status: str
     budget: Optional[Decimal]
+    department_id: Optional[int]
 
     model_config = {"from_attributes": True}

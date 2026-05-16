@@ -12,6 +12,7 @@ const columns = [
   { key: "id" as const, label: "ID" },
   { key: "project_code" as const, label: "Code" },
   { key: "project_name" as const, label: "Name" },
+  { key: "department_id" as const, label: "Dept ID" },
   { key: "status" as const, label: "Status" },
   { key: "start_date" as const, label: "Start Date" },
   { key: "end_date" as const, label: "End Date" },
@@ -35,6 +36,7 @@ const fields: FieldConfig[] = [
     ],
   },
   { name: "budget", label: "Budget ($)", type: "number" },
+  { name: "department_id", label: "Department ID", type: "number" },
 ];
 
 export default function ProjectsPage() {
