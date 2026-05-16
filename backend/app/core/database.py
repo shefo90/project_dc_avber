@@ -1,16 +1,24 @@
+import ssl
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from app.core.config import settings
 
 
-def _build_url(url: str) -> str:
-    # Vercel Lambda can't use psycopg2 (binary). Force pg8000 (pure Python).
+def _make_engine():
+    url = settings.database_url
+    # pg8000 is pure Python (works on Vercel Lambda); psycopg2 binary does not
     if url.startswith("postgresql://") or url.startswith("postgres://"):
         url = url.replace("://", "+pg8000://", 1)
-    return url
+
+    # Supabase pooler requires SSL; pg8000 needs the context passed explicitly
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+
+    return create_engine(url, connect_args={"ssl_context": ctx})
 
 
-engine = create_engine(_build_url(settings.database_url))
+engine = _make_engine()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
