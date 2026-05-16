@@ -1,7 +1,8 @@
 import ssl
+import pg8000
 from urllib.parse import urlparse, unquote
 from sqlalchemy import create_engine
-from sqlalchemy.engine import URL
+from sqlalchemy.pool import NullPool
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from app.core.config import settings
 
@@ -9,21 +10,29 @@ from app.core.config import settings
 def _make_engine():
     raw = settings.database_url
     parsed = urlparse(raw)
-    url = URL.create(
-        drivername="postgresql+pg8000",
-        username=unquote(parsed.username or ""),
-        password=unquote(parsed.password or ""),
-        host=parsed.hostname,
-        port=parsed.port,
-        database=parsed.path.lstrip("/"),
-    )
 
-    # Supabase pooler requires SSL; pg8000 needs the context passed explicitly
+    host = parsed.hostname
+    port = int(parsed.port or 5432)
+    database = parsed.path.lstrip("/")
+    username = unquote(parsed.username or "")
+    password = unquote(parsed.password or "")
+
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
 
-    return create_engine(url, connect_args={"ssl_context": ctx})
+    def creator():
+        return pg8000.connect(
+            user=username,
+            host=host,
+            port=port,
+            database=database,
+            password=password,
+            ssl_context=ctx,
+        )
+
+    # NullPool is correct for serverless: each Lambda gets its own process
+    return create_engine("postgresql+pg8000://", creator=creator, poolclass=NullPool)
 
 
 engine = _make_engine()
