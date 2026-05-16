@@ -1,14 +1,22 @@
 import ssl
+from urllib.parse import urlparse, unquote
 from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from app.core.config import settings
 
 
 def _make_engine():
-    url = settings.database_url
-    # pg8000 is pure Python (works on Vercel Lambda); psycopg2 binary does not
-    if url.startswith("postgresql://") or url.startswith("postgres://"):
-        url = url.replace("://", "+pg8000://", 1)
+    raw = settings.database_url
+    parsed = urlparse(raw)
+    url = URL.create(
+        drivername="postgresql+pg8000",
+        username=unquote(parsed.username or ""),
+        password=unquote(parsed.password or ""),
+        host=parsed.hostname,
+        port=parsed.port,
+        database=parsed.path.lstrip("/"),
+    )
 
     # Supabase pooler requires SSL; pg8000 needs the context passed explicitly
     ctx = ssl.create_default_context()
